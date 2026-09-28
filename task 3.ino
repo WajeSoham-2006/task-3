@@ -1,39 +1,59 @@
-const int tempPin = A0;     // TMP36 analog output
-const int fanLED  = 8;      // Fan / cooling indicator
-const int buzzer  = 9;      // Alert buzzer
-const float TEMP_THRESHOLD = 30.0;  // Threshold in °C
+#include <DHT.h>
+
+const int DHTPIN = 2;
+const int DHTTYPE = DHT22;
+
+const int buzzerPin = 8;
+const int threshold = 30;
+const int RED_LED_PIN = 7;   
+const int GREEN_LED_PIN= 9;   
+
+
+DHT ht(DHTPIN, DHTTYPE);
 
 void setup() {
   Serial.begin(9600);
-  pinMode(fanLED, OUTPUT);
-  pinMode(buzzer, OUTPUT);
 
-  Serial.println("=====================================");
-  Serial.println(" Smart IoT Automation System - Task 3");
-  Serial.println("       (TMP36 Sensor Version)");
-  Serial.println("=====================================");
-  delay(2000);
+  ht.begin();
+
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(RED_LED_PIN,   OUTPUT);  
+  pinMode(GREEN_LED_PIN, OUTPUT); 
+
 }
 
 void loop() {
-  int rawValue = analogRead(tempPin);          // 0-1023
-  float voltage = rawValue * (5.0 / 1024.0);   // Convert to volts
-  float temperature = (voltage - 0.5) * 100.0; // TMP36: 10mV/°C, 0.5V offset at 0°C
+
+  float humidity = ht.readHumidity();
+  float temperature = ht.readTemperature();
 
   Serial.print("Temperature: ");
   Serial.print(temperature);
   Serial.println(" C");
 
-  if (temperature > TEMP_THRESHOLD) {
-    digitalWrite(fanLED, HIGH);
-    digitalWrite(buzzer, HIGH);
-    Serial.println("Status: Temperature HIGH -> Fan/Alert ON");
-  } else {
-    digitalWrite(fanLED, LOW);
-    digitalWrite(buzzer, LOW);
-    Serial.println("Status: Temperature Normal -> Fan/Alert OFF");
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.println(" %");
+
+  if (temperature > threshold) {
+    tone(buzzerPin, 1000);
+    digitalWrite(RED_LED_PIN,   HIGH);  
+    digitalWrite(GREEN_LED_PIN, LOW);   
+    Serial.println("WARNING! Temperature HIGH");
+  }
+  else {
+    noTone(buzzerPin);
+    digitalWrite(RED_LED_PIN,   LOW);   
+    digitalWrite(GREEN_LED_PIN, HIGH);
+
+    Serial.println("Temperature NORMAL");
   }
 
-  Serial.println("-------------------------------------");
+  Serial.println("----------------");
+
   delay(2000);
 }
+
+
+
+
